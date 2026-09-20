@@ -1,9 +1,10 @@
-export default function TabBar({ tab, setTab }) {
+export default function TabBar({ tab, setTab, counterDisabled }) {
   return (
     <nav className="tabbar">
       <button
         className={tab === 'counter' ? 'tab active' : 'tab'}
         onClick={() => setTab('counter')}
+        disabled={counterDisabled}
       >
         🥤 My Cups
       </button>

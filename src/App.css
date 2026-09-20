@@ -191,6 +191,11 @@
   border-bottom-color: var(--sun);
 }
 
+.tab:disabled {
+  color: rgba(255, 255, 255, 0.35);
+  cursor: not-allowed;
+}
+
 /* ---- Counter tab ---- */
 
 .counter-tab {
@@ -276,6 +281,10 @@
 }
 
 .undo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: none;
   border: none;
   color: var(--ocean-mid);
@@ -289,11 +298,38 @@
   text-decoration: none;
 }
 
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---- Leaderboard ---- */
 
 .leaderboard {
   flex: 1;
   padding: 20px 16px 40px;
+}
+
+.winner-banner {
+  background: var(--sun);
+  color: var(--ocean-deep);
+  font-weight: 800;
+  font-size: 16px;
+  text-align: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 0 #e0b64f;
 }
 
 .empty {
@@ -341,4 +377,13 @@
 .score {
   font-size: 18px;
   color: var(--ocean-mid);
+}
+
+/* ---- Footer ---- */
+
+.app-footer {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(2, 62, 115, 0.35);
+  padding: 12px 0 16px;
 }

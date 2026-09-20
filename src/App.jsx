@@ -8,6 +8,7 @@ import CreateEvent from './components/CreateEvent';
 import TabBar from './components/TabBar';
 import CounterTab from './components/CounterTab';
 import Leaderboard from './components/Leaderboard';
+import Footer from './components/Footer';
 
 function getEventIdFromUrl() {
   return new URLSearchParams(window.location.search).get('event');
@@ -23,9 +24,12 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
   const [creatingEvent, setCreatingEvent] = useState(false);
+  const [undoing, setUndoing] = useState(false);
   const [error, setError] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [, forceTick] = useState(0);
+
+  const hasEnded = event ? new Date() > event.endTime.toDate() : false;
 
   useEffect(() => {
     return watchAuthState((u) => {
@@ -58,6 +62,12 @@ export default function App() {
     const id = setInterval(() => forceTick((t) => t + 1), 30000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (hasEnded && tab === 'counter') {
+      setTab('leaderboard');
+    }
+  }, [hasEnded, tab]);
 
   const handleSignIn = async () => {
     setSigningIn(true);
@@ -107,12 +117,15 @@ export default function App() {
   };
 
   const handleUndo = async () => {
-    if (!user || !eventId) return;
+    if (!user || !eventId || undoing) return;
+    setUndoing(true);
     setError(null);
     try {
       await undoCup(eventId, user);
     } catch (e) {
       setError(e.message);
+    } finally {
+      setUndoing(false);
     }
   };
 
@@ -140,32 +153,26 @@ export default function App() {
     setEventId(null);
   };
 
+  let content;
+
   if (!authReady) {
-    return (
+    content = (
       <div className="screen center">
         <div className="splash">💧</div>
       </div>
     );
-  }
-
-  if (!user) {
-    return <Login onSignIn={handleSignIn} loading={signingIn} error={error} />;
-  }
-
-  if (!eventId) {
-    return <CreateEvent onCreate={handleCreateEvent} loading={creatingEvent} error={error} />;
-  }
-
-  if (!eventChecked) {
-    return (
+  } else if (!user) {
+    content = <Login onSignIn={handleSignIn} loading={signingIn} error={error} />;
+  } else if (!eventId) {
+    content = <CreateEvent onCreate={handleCreateEvent} loading={creatingEvent} error={error} />;
+  } else if (!eventChecked) {
+    content = (
       <div className="screen center">
         <div className="splash">💧</div>
       </div>
     );
-  }
-
-  if (!event) {
-    return (
+  } else if (!event) {
+    content = (
       <div className="screen center">
         <p className="error">Event not found.</p>
         <button className="google-btn" onClick={handleStartNewEvent}>
@@ -173,60 +180,70 @@ export default function App() {
         </button>
       </div>
     );
+  } else {
+    const myCount = leaderboard?.find((row) => row.uid === user.uid)?.count ?? 0;
+    const isAdmin = user.uid === event.adminUid;
+    const now = new Date();
+    const startTime = event.startTime.toDate();
+    const endTime = event.endTime.toDate();
+    const canDrink = now >= startTime && now <= endTime;
+    const statusMessage =
+      now < startTime
+        ? `Starts ${startTime.toLocaleString([], { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' })}`
+        : hasEnded
+          ? 'Event ended — final tally!'
+          : null;
+
+    content = (
+      <div className="screen">
+        <header className="topbar">
+          <div className="me">
+            {user.picture && <img src={user.picture} alt="" className="avatar" />}
+            <span>{user.name?.split(' ')[0]}</span>
+          </div>
+          <button className="link-btn" onClick={handleSignOut}>
+            Sign out
+          </button>
+        </header>
+
+        <div className="event-banner">
+          <div className="event-name">{event.name}</div>
+          <div className="event-actions">
+            <button className="chip-btn" onClick={handleCopyLink}>
+              {linkCopied ? '✓ Copied!' : '🔗 Invite'}
+            </button>
+            {isAdmin && (
+              <button className="chip-btn danger" onClick={handleReset}>
+                ⟳ Reset all
+              </button>
+            )}
+          </div>
+        </div>
+
+        <TabBar tab={tab} setTab={setTab} counterDisabled={hasEnded} />
+
+        {tab === 'counter' && (
+          <CounterTab
+            count={myCount}
+            onDrink={handleDrink}
+            onUndo={handleUndo}
+            canDrink={canDrink}
+            undoing={undoing}
+            statusMessage={statusMessage}
+            error={error}
+          />
+        )}
+        {tab === 'leaderboard' && (
+          <Leaderboard rows={leaderboard} me={user.uid} hasEnded={hasEnded} />
+        )}
+      </div>
+    );
   }
 
-  const myCount = leaderboard?.find((row) => row.uid === user.uid)?.count ?? 0;
-  const isAdmin = user.uid === event.adminUid;
-  const now = new Date();
-  const startTime = event.startTime.toDate();
-  const endTime = event.endTime.toDate();
-  const canDrink = now >= startTime && now <= endTime;
-  const statusMessage =
-    now < startTime
-      ? `Starts ${startTime.toLocaleString([], { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' })}`
-      : now > endTime
-        ? 'Event ended — final tally!'
-        : null;
-
   return (
-    <div className="screen">
-      <header className="topbar">
-        <div className="me">
-          {user.picture && <img src={user.picture} alt="" className="avatar" />}
-          <span>{user.name?.split(' ')[0]}</span>
-        </div>
-        <button className="link-btn" onClick={handleSignOut}>
-          Sign out
-        </button>
-      </header>
-
-      <div className="event-banner">
-        <div className="event-name">{event.name}</div>
-        <div className="event-actions">
-          <button className="chip-btn" onClick={handleCopyLink}>
-            {linkCopied ? '✓ Copied!' : '🔗 Invite'}
-          </button>
-          {isAdmin && (
-            <button className="chip-btn danger" onClick={handleReset}>
-              ⟳ Reset all
-            </button>
-          )}
-        </div>
-      </div>
-
-      <TabBar tab={tab} setTab={setTab} />
-
-      {tab === 'counter' && (
-        <CounterTab
-          count={myCount}
-          onDrink={handleDrink}
-          onUndo={handleUndo}
-          canDrink={canDrink}
-          statusMessage={statusMessage}
-          error={error}
-        />
-      )}
-      {tab === 'leaderboard' && <Leaderboard rows={leaderboard} me={user.uid} />}
-    </div>
+    <>
+      {content}
+      <Footer />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import TallyMarks from './TallyMarks';
 
-export default function CounterTab({ count, onDrink, onUndo, canDrink, statusMessage, error }) {
+export default function CounterTab({ count, onDrink, onUndo, canDrink, undoing, statusMessage, error }) {
   return (
     <div className="counter-tab">
       <TallyMarks count={count} />
@@ -12,8 +12,14 @@ export default function CounterTab({ count, onDrink, onUndo, canDrink, statusMes
       <button className="drink-btn" onClick={onDrink} disabled={!canDrink}>
         💧 Drank a cup!
       </button>
-      <button className="undo-btn" onClick={onUndo} disabled={count === 0}>
-        ↩ Oops, remove one
+      <button className="undo-btn" onClick={onUndo} disabled={count === 0 || undoing || !canDrink}>
+        {undoing ? (
+          <>
+            <span className="spinner" /> Removing…
+          </>
+        ) : (
+          '↩ Oops, remove one'
+        )}
       </button>
     </div>
   );
