@@ -1,4 +1,4 @@
-import { collection, doc, increment, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
+import { arrayUnion, collection, doc, increment, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 const EVENTS_COLLECTION = 'events';
@@ -17,11 +17,14 @@ export function watchLeaderboard(eventId, callback) {
 }
 
 export async function drinkCup(eventId, user) {
-  await setDoc(
-    cupDoc(eventId, user.uid),
-    { name: user.name, email: user.email, count: increment(1) },
-    { merge: true },
-  );
+  await Promise.all([
+    setDoc(
+      cupDoc(eventId, user.uid),
+      { uid: user.uid, name: user.name, email: user.email, count: increment(1) },
+      { merge: true },
+    ),
+    setDoc(doc(db, 'users', user.uid), { joinedEventIds: arrayUnion(eventId) }, { merge: true }),
+  ]);
 }
 
 export async function undoCup(eventId, user) {

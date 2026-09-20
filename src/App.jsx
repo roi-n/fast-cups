@@ -8,7 +8,9 @@ import CreateEvent from './components/CreateEvent';
 import TabBar from './components/TabBar';
 import CounterTab from './components/CounterTab';
 import Leaderboard from './components/Leaderboard';
+import PastEvents from './components/PastEvents';
 import Footer from './components/Footer';
+import { getMyEvents } from './lib/myEvents';
 
 function getEventIdFromUrl() {
   return new URLSearchParams(window.location.search).get('event');
@@ -27,6 +29,8 @@ export default function App() {
   const [undoing, setUndoing] = useState(false);
   const [error, setError] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [myEvents, setMyEvents] = useState(null);
+  const [myEventsLoading, setMyEventsLoading] = useState(false);
   const [, forceTick] = useState(0);
 
   const hasEnded = event ? new Date() > event.endTime.toDate() : false;
@@ -47,6 +51,16 @@ export default function App() {
       .catch((e) => setError(e.message))
       .finally(() => setEventChecked(true));
   }, [user, eventId]);
+
+  useEffect(() => {
+    if (tab !== 'history' || !user) return;
+    setMyEventsLoading(true);
+    setError(null);
+    getMyEvents(user)
+      .then(setMyEvents)
+      .catch((e) => setError(e.message))
+      .finally(() => setMyEventsLoading(false));
+  }, [tab, user]);
 
   useEffect(() => {
     if (!event) return;
@@ -143,6 +157,13 @@ export default function App() {
     await navigator.clipboard.writeText(window.location.href);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleSelectPastEvent = (id) => {
+    if (id === eventId) return;
+    window.history.replaceState(null, '', `?event=${id}`);
+    setTab('counter');
+    setEventId(id);
   };
 
   const handleStartNewEvent = () => {
@@ -243,6 +264,15 @@ export default function App() {
         )}
         {tab === 'leaderboard' && (
           <Leaderboard rows={leaderboard} me={user.uid} hasEnded={hasEnded} />
+        )}
+        {tab === 'history' && (
+          <PastEvents
+            events={myEvents || []}
+            loading={myEventsLoading}
+            error={error}
+            currentEventId={eventId}
+            onSelect={handleSelectPastEvent}
+          />
         )}
       </div>
     );

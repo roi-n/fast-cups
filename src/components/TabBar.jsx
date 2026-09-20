@@ -14,6 +14,12 @@ export default function TabBar({ tab, setTab, counterDisabled }) {
       >
         🏆 Leaderboard
       </button>
+      <button
+        className={tab === 'history' ? 'tab active' : 'tab'}
+        onClick={() => setTab('history')}
+      >
+        📜 Past
+      </button>
     </nav>
   );
 }

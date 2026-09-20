@@ -31,6 +31,10 @@ clicks there:
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
+       match /users/{uid} {
+         allow read, write: if request.auth != null && request.auth.uid == uid;
+       }
+
        match /events/{eventId} {
          allow read: if request.auth != null;
          allow create: if request.auth != null
@@ -52,7 +56,9 @@ clicks there:
    someone else as admin) and read any event's leaderboard. A user can always
    write their own cup count; the event's admin can additionally write anyone's
    cup count in their own event, which is what powers the reset-everyone
-   button.
+   button. The `users/{uid}` doc is a small personal record (just a list of
+   event IDs you've joined, for the Past tab) that only you can read or write —
+   no Firestore indexes needed for any of this.
 
 ### 3. Register a web app
 
@@ -95,7 +101,10 @@ events/{eventId}
   name, adminUid, adminName, startTime, endTime, createdAt
 
 events/{eventId}/cups/{uid}
-  name, email, count
+  uid, name, email, count
+
+users/{uid}
+  joinedEventIds: string[]
 ```
 
 Tapping "drank a cup" atomically increments your own `cups` doc under the
@@ -124,9 +133,11 @@ decrement, so it clamps at zero instead of going negative.
 - **Resetting**: only the event's admin sees a "⟳ Reset all" button, which
   zeroes out everyone's count in that event (with a confirmation prompt) —
   useful for restarting mid-fast without recreating the whole event.
-- Each browser tab is scoped to one event at a time via the URL; there's no
-  "my past events" list yet, so hold onto the link if you want to come back
-  to a specific fast.
+- **📜 Past tab**: lists every event you created or drank at least one cup
+  in — works from any device, not just the one you started on, since it's
+  backed by your `users/{uid}` doc rather than device storage. Ended events
+  show grayed out with the winner and their cup count; tapping any event
+  jumps into it.
 
 ## Deploying to GitHub Pages
 
