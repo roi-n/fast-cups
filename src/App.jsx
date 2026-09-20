@@ -8,7 +8,7 @@ import CreateEvent from './components/CreateEvent';
 import TabBar from './components/TabBar';
 import CounterTab from './components/CounterTab';
 import Leaderboard from './components/Leaderboard';
-import PastEvents from './components/PastEvents';
+import AllEvents from './components/AllEvents';
 import Footer from './components/Footer';
 import { getMyEvents } from './lib/myEvents';
 
@@ -53,14 +53,14 @@ export default function App() {
   }, [user, eventId]);
 
   useEffect(() => {
-    if (tab !== 'history' || !user) return;
+    if (!user || eventId) return;
     setMyEventsLoading(true);
     setError(null);
     getMyEvents(user)
       .then(setMyEvents)
       .catch((e) => setError(e.message))
       .finally(() => setMyEventsLoading(false));
-  }, [tab, user]);
+  }, [user, eventId]);
 
   useEffect(() => {
     if (!event) return;
@@ -159,18 +159,19 @@ export default function App() {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  const handleSelectPastEvent = (id) => {
+  const handleSelectEvent = (id) => {
     if (id === eventId) return;
     window.history.replaceState(null, '', `?event=${id}`);
     setTab('counter');
     setEventId(id);
   };
 
-  const handleStartNewEvent = () => {
+  const handleGoHome = () => {
     window.history.replaceState(null, '', window.location.pathname);
     setEvent(null);
     setEventChecked(false);
     setError(null);
+    setTab('counter');
     setEventId(null);
   };
 
@@ -185,7 +186,26 @@ export default function App() {
   } else if (!user) {
     content = <Login onSignIn={handleSignIn} loading={signingIn} error={error} />;
   } else if (!eventId) {
-    content = <CreateEvent onCreate={handleCreateEvent} loading={creatingEvent} error={error} />;
+    content = (
+      <div className="screen">
+        <header className="topbar">
+          <div className="me-row">
+            {user.picture && <img src={user.picture} alt="" className="avatar" />}
+            <span className="me-name">{user.name?.split(' ')[0]}</span>
+          </div>
+          <button className="link-btn" onClick={handleSignOut}>
+            Sign out
+          </button>
+        </header>
+        <CreateEvent onCreate={handleCreateEvent} loading={creatingEvent} error={error} />
+        <AllEvents
+          events={myEvents || []}
+          loading={myEventsLoading}
+          currentEventId={null}
+          onSelect={handleSelectEvent}
+        />
+      </div>
+    );
   } else if (!eventChecked) {
     content = (
       <div className="screen center">
@@ -196,8 +216,8 @@ export default function App() {
     content = (
       <div className="screen center">
         <p className="error">Event not found.</p>
-        <button className="google-btn" onClick={handleStartNewEvent}>
-          Start a new event
+        <button className="primary-btn" onClick={handleGoHome}>
+          Go home
         </button>
       </div>
     );
@@ -224,22 +244,20 @@ export default function App() {
     content = (
       <div className="screen">
         <header className="topbar">
-          <div className="me">
-            {user.picture && <img src={user.picture} alt="" className="avatar" />}
-            <span>{user.name?.split(' ')[0]}</span>
-          </div>
+          <button className="icon-btn" onClick={handleGoHome} aria-label="Home">
+            🏠
+          </button>
           <button className="link-btn" onClick={handleSignOut}>
             Sign out
           </button>
         </header>
 
-        <div className="event-banner">
-          <div className="event-name">
-            {event.name} <span className="event-end">(ends at {endTimeLabel})</span>
-          </div>
+        <div className="title-block">
+          <h1 className="event-name">{event.name}</h1>
+          <div className="event-end">Ends {endTimeLabel}</div>
           <div className="event-actions">
             <button className="chip-btn" onClick={handleCopyLink}>
-              {linkCopied ? '✓ Copied!' : '🔗 Invite'}
+              {linkCopied ? '✓ Copied' : '🔗 Invite'}
             </button>
             {isAdmin && (
               <button className="chip-btn danger" onClick={handleReset}>
@@ -264,15 +282,6 @@ export default function App() {
         )}
         {tab === 'leaderboard' && (
           <Leaderboard rows={leaderboard} me={user.uid} hasEnded={hasEnded} />
-        )}
-        {tab === 'history' && (
-          <PastEvents
-            events={myEvents || []}
-            loading={myEventsLoading}
-            error={error}
-            currentEventId={eventId}
-            onSelect={handleSelectPastEvent}
-          />
         )}
       </div>
     );

@@ -1,12 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap');
-
 :root {
-  --ocean-deep: #023e73;
-  --ocean-mid: #0575c9;
-  --ocean-light: #4fb8e8;
-  --foam: #e9fbff;
-  --sun: #ffd166;
-  --coral: #ff6b6b;
+  --accent: #007aff;
+  --accent-soft: rgba(0, 122, 255, 0.12);
+  --danger: #ff3b30;
+  --danger-soft: rgba(255, 59, 48, 0.12);
+  --gold: #ffd60a;
+  --gold-soft: rgba(255, 214, 10, 0.16);
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --text-secondary: #6e6e73;
+  --separator: rgba(60, 60, 67, 0.13);
   color-scheme: light;
 }
 
@@ -19,11 +22,13 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial,
+    sans-serif;
+  color: var(--text);
 }
 
 body {
-  background: linear-gradient(180deg, var(--ocean-light) 0%, var(--ocean-mid) 45%, var(--ocean-deep) 100%);
+  background: var(--bg);
   display: flex;
   justify-content: center;
 }
@@ -32,8 +37,8 @@ body {
   width: 100%;
   max-width: 480px;
   min-height: 100vh;
-  background: var(--foam);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+  background: var(--bg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow-x: hidden;
 }

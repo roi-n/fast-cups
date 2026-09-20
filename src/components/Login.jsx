@@ -4,7 +4,7 @@ export default function Login({ onSignIn, loading, error }) {
       <div className="splash">💧</div>
       <h1>Fast Cups</h1>
       <p className="tagline">Count every cup before the fast.</p>
-      <button className="google-btn" onClick={onSignIn} disabled={loading}>
+      <button className="primary-btn" onClick={onSignIn} disabled={loading}>
         {loading ? 'Signing in…' : 'Sign in with Google'}
       </button>
       {error && <div className="error">{error}</div>}

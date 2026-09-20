@@ -1,25 +1,19 @@
 export default function TabBar({ tab, setTab, counterDisabled }) {
   return (
-    <nav className="tabbar">
+    <div className="segmented-control">
       <button
-        className={tab === 'counter' ? 'tab active' : 'tab'}
+        className={`segment ${tab === 'counter' ? 'active' : ''}`}
         onClick={() => setTab('counter')}
         disabled={counterDisabled}
       >
-        🥤 My Cups
+        My Cups
       </button>
       <button
-        className={tab === 'leaderboard' ? 'tab active' : 'tab'}
+        className={`segment ${tab === 'leaderboard' ? 'active' : ''}`}
         onClick={() => setTab('leaderboard')}
       >
-        🏆 Leaderboard
+        Leaderboard
       </button>
-      <button
-        className={tab === 'history' ? 'tab active' : 'tab'}
-        onClick={() => setTab('history')}
-      >
-        📜 Past
-      </button>
-    </nav>
+    </div>
   );
 }

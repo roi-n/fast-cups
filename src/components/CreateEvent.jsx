@@ -19,9 +19,8 @@ export default function CreateEvent({ onCreate, loading, error }) {
   };
 
   return (
-    <div className="screen center create-event-screen">
-      <div className="splash">💧</div>
-      <h1>Start a fast</h1>
+    <section className="card-section">
+      <h2 className="section-title">Start a fast</h2>
       <form className="create-event-form" onSubmit={handleSubmit}>
         <label>
           Event name
@@ -41,11 +40,11 @@ export default function CreateEvent({ onCreate, loading, error }) {
           Ends
           <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required />
         </label>
-        <button className="drink-btn" type="submit" disabled={loading}>
-          {loading ? 'Creating…' : '💧 Create event'}
+        <button className="primary-btn" type="submit" disabled={loading}>
+          {loading ? 'Creating…' : 'Create event'}
         </button>
         {error && <div className="error">{error}</div>}
       </form>
-    </div>
+    </section>
   );
 }
