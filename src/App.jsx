@@ -259,11 +259,11 @@ export default function App() {
             <button className="chip-btn" onClick={handleCopyLink}>
               {linkCopied ? '✓ Copied' : '🔗 Invite'}
             </button>
-            {isAdmin && (
+            {/* {isAdmin && (
               <button className="chip-btn danger" onClick={handleReset}>
                 ⟳ Reset all
               </button>
-            )}
+            )} */}
           </div>
         </div>
 
