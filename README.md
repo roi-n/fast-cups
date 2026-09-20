@@ -1,8 +1,9 @@
 # Fast Cups 💧
 
-Count how many cups of water you and your family drink before a fast. Sign in
-with Google, tap "drank a cup", watch a tally build up, and see who's leading
-on a live leaderboard.
+Count how many cups of water you and your family drink before a fast. Anyone
+can start an event (a name plus a start/end time), share the link, and
+everyone who opens it signs in with Google, taps "drank a cup", and watches a
+live leaderboard for that event.
 
 Backend is Firebase: Google Sign-In via Firebase Auth, cup counts stored in
 Firestore. No server code to run.
@@ -30,16 +31,28 @@ clicks there:
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
-       match /cups/{userId} {
+       match /events/{eventId} {
          allow read: if request.auth != null;
-         allow write: if request.auth != null && request.auth.uid == userId;
+         allow create: if request.auth != null
+           && request.resource.data.adminUid == request.auth.uid;
+         allow update, delete: if false;
+
+         match /cups/{userId} {
+           allow read: if request.auth != null;
+           allow write: if request.auth != null
+             && (request.auth.uid == userId
+                 || get(/databases/$(database)/documents/events/$(eventId)).data.adminUid == request.auth.uid);
+         }
        }
      }
    }
    ```
 
-   This lets any signed-in user read the whole leaderboard, but only write
-   their own cup count (the document ID is their Firebase Auth UID).
+   Any signed-in user can create an event (only as themselves — you can't set
+   someone else as admin) and read any event's leaderboard. A user can always
+   write their own cup count; the event's admin can additionally write anyone's
+   cup count in their own event, which is what powers the reset-everyone
+   button.
 
 ### 3. Register a web app
 
@@ -77,13 +90,43 @@ full real-phone testing is easiest once deployed (phase 2).
 
 ## Data model
 
-Firestore collection `cups`, one document per person, keyed by their Firebase
-Auth UID: `{ name, email, count }`. Tapping "drank a cup" atomically
-increments that document's `count` (creating it on first use). Since everyone
-only ever writes their own document, there's no conflict between family
-members hitting the button at the same time. The leaderboard listens for
-live updates, so everyone's counts refresh in real time without needing to
-refresh the page.
+```
+events/{eventId}
+  name, adminUid, adminName, startTime, endTime, createdAt
+
+events/{eventId}/cups/{uid}
+  name, email, count
+```
+
+Tapping "drank a cup" atomically increments your own `cups` doc under the
+current event (creating it on first use). Since everyone only ever writes
+their own document, there's no conflict between family members hitting the
+button at the same time. The leaderboard listens for live updates, so
+everyone's counts refresh in real time without needing to refresh the page —
+if a family member's tab isn't open, they'll just see the latest count next
+time they open it (no push notifications, by design, to keep the backend
+serverless).
+
+Undoing a cup ("oops, remove one") uses a transaction rather than a plain
+decrement, so it clamps at zero instead of going negative.
+
+## Using it: events, invites, and admin reset
+
+- **Starting a fast**: the first person signs in and fills in an event name
+  plus start/end time. This makes them that event's **admin** and puts an
+  `?event=<id>` on the URL.
+- **Inviting others**: share that URL (there's also a "🔗 Invite" button in
+  the app that copies the current link). Anyone who opens it and signs in
+  joins the same event and leaderboard.
+- **The drink button** is only enabled between the event's start and end
+  time; outside that window it shows when the event starts, or that it's
+  ended.
+- **Resetting**: only the event's admin sees a "⟳ Reset all" button, which
+  zeroes out everyone's count in that event (with a confirmation prompt) —
+  useful for restarting mid-fast without recreating the whole event.
+- Each browser tab is scoped to one event at a time via the URL; there's no
+  "my past events" list yet, so hold onto the link if you want to come back
+  to a specific fast.
 
 ## Deploying to GitHub Pages
 
