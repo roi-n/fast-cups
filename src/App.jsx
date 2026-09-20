@@ -187,6 +187,12 @@ export default function App() {
     const startTime = event.startTime.toDate();
     const endTime = event.endTime.toDate();
     const canDrink = now >= startTime && now <= endTime;
+    const endTimeLabel = endTime.toLocaleString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      month: 'short',
+      day: 'numeric',
+    });
     const statusMessage =
       now < startTime
         ? `Starts ${startTime.toLocaleString([], { hour: 'numeric', minute: '2-digit', month: 'short', day: 'numeric' })}`
@@ -207,7 +213,9 @@ export default function App() {
         </header>
 
         <div className="event-banner">
-          <div className="event-name">{event.name}</div>
+          <div className="event-name">
+            {event.name} <span className="event-end">(ends at {endTimeLabel})</span>
+          </div>
           <div className="event-actions">
             <button className="chip-btn" onClick={handleCopyLink}>
               {linkCopied ? '✓ Copied!' : '🔗 Invite'}
